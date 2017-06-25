@@ -11,15 +11,9 @@ import numpy as np
 from keras.models import Sequential
 from keras.layers.core import Dense
 from keras.layers import Dropout
-from keras.layers import Embedding, Conv1D, GlobalMaxPooling1D
+from keras.layers import Embedding, Conv1D, GlobalMaxPool1D
 from keras.optimizers import SGD, Adam, Adadelta, Adagrad
 from keras.regularizers import l1, l2
-from keras.utils import np_utils
-from sklearn.preprocessing import StandardScaler 
-from sklearn import metrics
-from sklearn.cross_validation import KFold
-from sklearn.model_selection import train_test_split
-
 
 # MLP with single hidden layer and l2 regulization, no dropout 
 def simpleMLP(design_matrix, nodes_per_layer, dropout_rate, weight_decay, 
@@ -54,9 +48,19 @@ def simpleMLP(design_matrix, nodes_per_layer, dropout_rate, weight_decay,
 
     return model
 
+def basic_ffnet(input_shape):
+    model = Sequential()
+    model.add(Dense(16, input_shape=input_shape, activation="relu"))
+    model.add(Dropout(0.5))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(optimizer='rmsprop',
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+    return model
 
 # 1-CNN with embedded layer not tested yet, no gpu :(
-def embeddingsCNN(dictionary, embedded_dim, feature_maps=100, window_size=3, dropout_rate=0.25):
+def embeddingsCNN(dictionary, embedded_dim, learning_rate=0.01,
+                  feature_maps=100, window_size=3, dropout_rate=0.25):
     
     # transform dictionary into suitable input
     token2id = dictionary.token2id
@@ -72,28 +76,37 @@ def embeddingsCNN(dictionary, embedded_dim, feature_maps=100, window_size=3, dro
     
     # add dropout (set higher than after convolutional layer)
     model.add(Dropout(dropout_rate))
-    
-    # hidden layer after embedded layer (later try out convultional)
-    model.add(Conv1D(filters=feature_maps,         # feature maps      
+    model.add(Conv1D(filters=feature_maps,         # feature maps
                      kernel_size=window_size,      # length of the 1D convolution windows (can be a tuple or list?)
                      padding='valid',           
                      activation='relu'             # usually tanh or relu
                      )
     )
-
-    # add max pooling    
-    model.add(GlobalMaxPooling1D())
-
-    # add dropout 
+    model.add(GlobalMaxPool1D())
     model.add(Dropout(dropout_rate))
-    
-    # output layer
-    model.add(Dense(1,activation ='sigmoid'))
-    
-    # specify optimizer for backpropagation (maybe try adadelta etc.) 
-    bp = SGD(lr=learning_rate) 
+    model.add(Dense(1, activation ='sigmoid'))
 
-    # compile the model
+    bp = SGD(lr=learning_rate)
     model.compile(loss='binary_crossentropy', optimizer=bp, class_mode="binary", metrics=['accuracy'])
+
+    return model
+
+def CNN_no_embedding(output_dim=1, maxlen=None, embedding_length=200):
+    assert maxlen
+
+    input_shape = (maxlen, embedding_length)
+    filters = 100
+    kernel_size = 7
+    model = Sequential()
+    model.add(Conv1D(filters,
+                 kernel_size,
+                 padding='valid',
+                 activation='relu',
+                 strides=1, input_shape=input_shape))
+    model.add(GlobalMaxPool1D())
+    model.add(Dropout(0.5))
+    model.add(Dense(32, activation="relu"))
+    model.add(Dropout(0.5))
+    model.add(Dense(output_dim, activation='sigmoid'))
 
     return model

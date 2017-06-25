@@ -7,9 +7,10 @@ from datetime import datetime
 def score_prediction(y_true, yhat, binary=True):
 
     def max_to_one(arr):
-        arr[arr == np.max(arr)] = 1
-        arr[arr < np.max(arr)] = 0
-        return arr
+        copy_ = arr[:]
+        copy_[copy_ == np.max(copy_)] = 1
+        copy_[copy_ < np.max(copy_)] = 0
+        return copy_
 
     if binary:
         acc = accuracy_score(y_true, np.round(yhat))
@@ -18,9 +19,9 @@ def score_prediction(y_true, yhat, binary=True):
         print("AUC: {:.2}".format(roc_auc_score(y_true, yhat)))
         pd.Series(yhat.flatten()).hist()
     else:
-        yhat = np.apply_along_axis(max_to_one, arr=yhat, axis=1)
-        acc = accuracy_score(y_true, np.round(yhat))
-        print(classification_report(y_true, np.round(yhat)))
+        yhat_rounded = np.apply_along_axis(max_to_one, arr=yhat, axis=1)
+        acc = accuracy_score(y_true, yhat_rounded)
+        print(classification_report(y_true, yhat_rounded))
         print("Accuracy: {:.2%}".format(acc))
 
     return acc
