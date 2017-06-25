@@ -1,3 +1,4 @@
+
 from sklearn.metrics import classification_report, accuracy_score, roc_auc_score
 import pandas as pd
 import numpy as np
@@ -50,7 +51,7 @@ def load_multiclass_data(path="data/train_multiclass.csv"):
 
 def create_binary_submission(yhat, ids, save_path):
     if not save_path:
-        return print("Need a save path!")
+        return "Need a save path!"
     preds = np.round(yhat.flatten())
     sub = pd.DataFrame(data={"Id": ids, "Prediction": preds})
 
@@ -58,3 +59,4 @@ def create_binary_submission(yhat, ids, save_path):
     sub.loc[sub["Prediction"] == 1, "Category"] = "cancer"
     path = save_path + "binary_submission_" + str(datetime.now()) + ".csv"
     sub[["Id", "Category"]].to_csv(path, index=False)
+
