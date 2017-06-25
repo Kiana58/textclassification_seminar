@@ -42,6 +42,7 @@ def pad_or_trunc(doc, maxlen=100):
 texts = [np.array([np.transpose(word2vec(word)) for word in 
           tokenizer.tokenize(document.lower()) if word_is_valid(word)]) for document in documents_train]
 
+print(f"Number of unmatched words: {len(no_hit)}")
 del word_vectors, documents_train
 gc.collect()
 

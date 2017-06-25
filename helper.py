@@ -1,4 +1,6 @@
+import gc
 
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, accuracy_score, roc_auc_score
 import pandas as pd
 import numpy as np
@@ -60,3 +62,26 @@ def create_binary_submission(yhat, ids, save_path):
     path = save_path + "binary_submission_" + str(datetime.now()) + ".csv"
     sub[["Id", "Category"]].to_csv(path, index=False)
 
+
+def cv_train_model(model, X_train, y_train):
+    results = []
+    model.compile(optimizer="adagrad",
+                  loss='categorical_crossentropy',
+                  metrics=['categorical_accuracy'])
+    print(model.summary())
+
+    for i in range(11):
+        print(f"Iteration {i + 1}")
+        X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size=0.1)
+        model.compile(optimizer="adagrad",
+                      loss='categorical_crossentropy',
+                      metrics=['categorical_accuracy'])
+        model.fit(X_train, y_train, epochs=15, batch_size=256, verbose=0)
+        yhat = model.predict(X_test)
+        acc = score_prediction(y_test, yhat, binary=False)
+        results.append(acc)
+        gc.collect()
+
+    print(f"Average accuracy:{np.mean(results)}")
+    print(f"Min accuracy:{np.min(results)}")
+    print(f"Max accuracy:{np.max(results)}")
