@@ -12,7 +12,7 @@ from keras.models import Sequential
 from keras.layers.core import Dense
 from keras.layers import Dropout
 from keras.layers import Embedding, Conv1D, GlobalMaxPool1D
-from keras.optimizers import SGD, Adam, Adadelta, Adagrad
+from keras.optimizers import SGD, Adam, Adadelta, Adagrad, RMSprop
 from keras.regularizers import l1, l2
 
 # MLP with single hidden layer and l2 regulization, no dropout
@@ -90,21 +90,34 @@ def embeddingsCNN(dictionary, embedded_dim, learning_rate=0.01,
     model.compile(loss='binary_crossentropy', optimizer=bp, class_mode="binary", metrics=['accuracy'])
 
     return model
-
-def simpleCNN(output_dim=1):
-    input_shape = (maxlen, embedding_length)
-    filters = 400
-    kernel_size = (7)
-    model = Sequential()
-    model.add(Conv1D(400,
-                 kernel_size,
+    
+def simpleCNN(output_dim=23, maxlen=100, embedding_length=200, filters = 400, kernel_size = 7, 
+              dropout_rate=0.5, nodes_per_layer=128, learning_rate=0.001):
+    
+    model = Sequential()    # feed-forward model
+    
+    # convolutional layer
+    model.add(Conv1D(filters=filters,
+                 kernel_size = kernel_size,
                  padding='valid',
                  activation='relu',
-                 strides=1, input_shape=input_shape))
+                 strides=1, 
+                 input_shape=(maxlen, embedding_length)
+                 )
+    )
+    
     model.add(GlobalMaxPool1D())
-    model.add(Dropout(0.5))
-    model.add(Dense(32, activation="relu"))
-    model.add(Dropout(0.5))
+    model.add(Dropout(dropout_rate))
+    
+    # intermediate dense layer
+    model.add(Dense(nodes_per_layer, activation="relu"))
+    model.add(Dropout(dropout_rate))
+    
+    # output layer
     model.add(Dense(output_dim, activation='sigmoid'))
-
+    
+    # optimization
+    bp = RMSprop(lr=learning_rate)
+    model.compile(loss='categorical_crossentropy', optimizer=bp, class_mode="binary", metrics=['accuracy'])
+    
     return model
