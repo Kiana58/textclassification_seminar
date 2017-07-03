@@ -7,14 +7,13 @@ import numpy as np
 from datetime import datetime
 
 
+def max_to_one(arr):
+    copy_ = np.copy(arr)
+    copy_[copy_ == np.max(copy_)] = 1
+    copy_[copy_ < np.max(copy_)] = 0
+    return copy_
+
 def score_prediction(y_true, yhat, binary=True):
-
-    def max_to_one(arr):
-        copy_ = arr[:]
-        copy_[copy_ == np.max(copy_)] = 1
-        copy_[copy_ < np.max(copy_)] = 0
-        return copy_
-
     if binary:
         acc = accuracy_score(y_true, np.round(yhat))
         print(classification_report(y_true, np.round(yhat)))
@@ -48,7 +47,7 @@ def load_multiclass_data(path="data/train_multiclass.csv"):
     target = pd.get_dummies(df["Category"])
     documents = df["Text"]
 
-    return documents, target
+    return documents, target, df["Category"]
 
 
 def create_binary_submission(yhat, ids, save_path):
