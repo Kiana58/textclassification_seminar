@@ -50,16 +50,14 @@ def load_multiclass_data(path="data/train_multiclass.csv"):
     return documents, target, df["Category"]
 
 
-def create_binary_submission(yhat, ids, save_path):
-    if not save_path:
-        return "Need a save path!"
+def create_binary_submission(yhat, ids):
     preds = np.round(yhat.flatten())
     sub = pd.DataFrame(data={"Id": ids, "Prediction": preds})
 
     sub["Category"] = "nonCancer"
     sub.loc[sub["Prediction"] == 1, "Category"] = "cancer"
-    path = save_path + "binary_submission_" + str(datetime.now()) + ".csv"
-    sub[["Id", "Category"]].to_csv(path, index=False)
+
+    return sub[["Id", "Category"]]
 
 
 def cv_train_model(model, X_train, y_train):
